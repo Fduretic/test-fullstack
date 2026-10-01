@@ -1,0 +1,38 @@
+<section class="hero">
+  <div class="hero-copy"><span class="eyebrow"><span class="tiny-star">✳</span> YOUR PERSONAL PHOTO ARCHIVE</span>
+    <h1>Small moments.<br><span>Worth keeping.</span></h1>
+    <p>A home for your favorite photos. Gather them into albums,<br class="desktop-break"> give them a name, and come back whenever you like.</p>
+    <a class="button primary" routerLink="/albums/new"><app-icon name="plus"/> Create an album <app-icon name="arrow"/></a>
+  </div>
+  <div class="hero-art" aria-hidden="true"><div class="art-grid"></div>
+    <div class="paper-photo back-photo"><div class="little-sun"></div></div>
+    <div class="paper-photo front-photo"><div class="landscape"><span class="sun"></span><span class="mountain one"></span><span class="mountain two"></span><span class="landscape-grain"></span></div><span class="photo-caption">a good day, kept forever.</span></div>
+    <div class="art-sticker">LESS SCROLLING.<br>MORE REMEMBERING.</div><span class="spark spark-one">✳</span><span class="spark spark-two">+</span>
+  </div>
+</section>
+<section class="collection" aria-labelledby="collection-title">
+  <div class="section-heading"><div class="heading-group"><span class="index-label">01 /</span><h2 id="collection-title">Your collection</h2><span class="count-badge">{{ albums().length }}</span></div>
+    <span class="collection-stats">{{ albums().length }} {{ albums().length === 1 ? 'album' : 'albums' }} <span>·</span> {{ totalPhotos() }} {{ totalPhotos() === 1 ? 'photo' : 'photos' }}</span>
+  </div>
+  @if (loading()) {
+    <div class="album-grid" aria-label="Loading albums" aria-busy="true">@for (i of [1,2,3]; track i) { <div class="skeleton-card"><div></div><span></span></div> }</div>
+  } @else if (error()) {
+    <div class="error-state" role="alert"><h3>We couldn't load your albums.</h3><p>{{ error() }}</p><button class="button" (click)="load()">Try again</button></div>
+  } @else if (albums().length === 0) {
+    <div class="empty-collection"><div class="empty-illustration"><app-icon name="album"/><span>+</span></div><span class="eyebrow">A FRESH PAGE</span><h3>Every collection starts somewhere.</h3><p>Your first adventure, a weekend away, or just the everyday.<br>Create an album and make a little room for it.</p><a class="text-link" routerLink="/albums/new">Create your first album <app-icon name="arrow"/></a></div>
+  } @else {
+    <div class="album-grid">
+      @for (album of albums(); track album.id; let index = $index) {
+        <a class="album-card" [routerLink]="['/albums', album.id]">
+          <div class="album-cover" [class.cover-blue]="index % 3 === 1" [class.cover-green]="index % 3 === 2">
+            @if (album.coverUrl) { <img [src]="asset(album.coverUrl)" [alt]="album.name + ' cover'" loading="lazy"> } @else { <app-icon name="image"/><span>MEMORIES GO HERE</span> }
+            <span class="photo-count"><app-icon name="image"/> {{ album.photoCount }}</span>
+          </div>
+          <div class="album-card-body"><span class="album-date">{{ album.createdAt | date:'MMM d, yyyy' }}</span><h3>{{ album.name }}</h3><p>{{ album.description || 'A little collection of moments.' }}</p><span class="card-bottom">Open album <app-icon name="arrow"/></span></div>
+        </a>
+      }
+      <a class="new-album-card" routerLink="/albums/new"><span class="new-album-plus"><app-icon name="plus"/></span><h3>Room for more.</h3><p>Start another collection.</p><span class="text-link">New album <app-icon name="arrow"/></span></a>
+    </div>
+  }
+</section>
+<div class="collection-note"><app-icon name="sun"/><span>Big trips. Little rituals. Everything in between.</span><span class="note-line"></span><span class="mono">KEEP THE GOOD STUFF.</span></div>

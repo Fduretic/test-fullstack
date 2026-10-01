@@ -1,0 +1,50 @@
+version: 1
+compose: compose.yaml
+public:
+  service: web
+  port: 80
+routing:
+  pathPrefix: true
+services: []
+technologies:
+  - name: Angular
+  - name: NestJS
+environment:
+  - key: POSTGRES_PASSWORD
+    description: Unique installation database password
+    required: true
+    secret: true
+    phase: runtime
+  - key: APP_BASE_PATH
+    description: Public URL path prefix, use / or /gallery/ to match VPS Admin routing
+    required: false
+    secret: false
+    phase: runtime
+  - key: POSTGRES_USER
+    description: Database user; keep app
+    required: false
+    secret: false
+    phase: runtime
+  - key: POSTGRES_DB
+    description: Database name; keep app
+    required: false
+    secret: false
+    phase: runtime
+  - key: STORAGE_PATH
+    description: Keep /app/uploads to match the platform storage mount
+    required: false
+    secret: false
+    phase: runtime
+storage:
+  - name: uploads
+    service: api
+    path: /app/uploads
+database:
+  service: database
+  name: app
+  user: app
+  passwordEnv: POSTGRES_PASSWORD
+migration:
+  service: api
+  command: ["node", "apps/api/dist/migrate.js"]
+schedules: []

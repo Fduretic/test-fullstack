@@ -1,0 +1,26 @@
+{
+  "name": "fullstack-with-storage",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["apps/api", "apps/web"],
+  "engines": { "node": ">=22.22.3 <23" },
+  "scripts": {
+    "build": "npm run build -w @album/api && npm run build -w @album/web",
+    "start:api": "npm run start -w @album/api",
+    "start:web": "npm run start -w @album/web",
+    "migrate": "npm run migrate -w @album/api",
+    "typecheck": "tsc -p apps/api/tsconfig.json --noEmit && ng build --configuration development",
+    "test": "node --test tests/contract.test.mjs",
+    "test:e2e": "playwright test",
+    "test:deployment": "node scripts/verify-deployment.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/express": "5.0.3",
+    "@types/multer": "2.0.0",
+    "@types/node": "22.19.1",
+    "typescript": "5.9.3",
+    "yaml": "2.9.1"
+  },
+  "overrides": { "piscina": "5.3.2" }
+}

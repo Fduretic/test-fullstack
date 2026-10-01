@@ -1,0 +1,45 @@
+<div class="page-wrap">
+  <a class="back-link" [routerLink]="editing && !isNew && album() ? ['/albums', album()!.id] : ['/']"><app-icon name="back"/> {{ editing && !isNew ? 'Back to album' : 'All albums' }}</a>
+  @if (loading()) { <div class="loading-page" aria-busy="true">Opening your album…</div> }
+  @else {
+    @if (error()) { <div class="alert error" role="alert">{{ error() }}</div> }
+    @if (notice()) { <div class="alert success" role="status"><app-icon name="check"/> {{ notice() }}</div> }
+    @if (isNew || album()) {
+      <div class="page-heading"><div><span class="eyebrow">{{ isNew ? 'A NEW CHAPTER' : editing ? 'MAKE IT YOURS' : 'FROM YOUR COLLECTION' }}</span><h1>{{ isNew ? 'Create an album.' : editing ? 'Edit album.' : album()!.name }}</h1>
+        <p>{{ isNew ? 'Give your moments a place to live.' : editing ? 'A few details. A few photos. A collection that’s yours.' : album()!.description || 'A little collection of moments, kept together.' }}</p>
+        @if (!editing) { <span class="album-meta">{{ album()!.photoCount }} {{ album()!.photoCount === 1 ? 'photo' : 'photos' }} <span>·</span> Created {{ album()!.createdAt | date:'MMMM d, yyyy' }}</span> }
+      </div>
+      @if (!editing) { <a class="button primary" [routerLink]="['/albums', album()!.id, 'edit']"><app-icon name="edit"/> Edit album</a> }
+      </div>
+      @if (editing) {
+        <div class="editor-layout"><aside class="editor-aside"><span class="index-label">01 / THE DETAILS</span><h2>A name to <br>remember.</h2><p>Keep it simple, make it personal. <br>You can always change it later.</p><div class="aside-stamp"><app-icon name="album"/> YOUR STORY,<br>YOUR ALBUM.</div></aside>
+          <form class="details-form" (ngSubmit)="save()">
+            <label for="album-name">Album name <span class="required">*</span></label><input id="album-name" name="name" [(ngModel)]="name" maxlength="120" required placeholder="e.g. Somewhere by the sea" [disabled]="busy() || uploading()"><span class="field-hint">A good name is the beginning of a good story. <span>{{ name.length }}/120</span></span>
+            <label for="album-description">Description <span class="optional">optional</span></label><textarea id="album-description" name="description" [(ngModel)]="description" maxlength="2000" rows="4" placeholder="Where was it? Who was there? What made it worth keeping?" [disabled]="busy() || uploading()"></textarea><span class="field-hint"><span>A little context for your future self.</span><span>{{ description.length }}/2000</span></span>
+            <div class="form-actions"><a class="text-link" [routerLink]="isNew ? ['/'] : ['/albums', album()!.id]">Cancel</a><button class="button primary" type="submit" [disabled]="busy() || uploading() || !name.trim()"><app-icon [name]="isNew ? 'plus' : 'check'"/> {{ busy() ? 'Saving…' : isNew ? 'Create album' : 'Save changes' }}</button></div>
+          </form>
+        </div>
+        @if (!isNew) {
+          <div class="upload-section"><div class="section-heading"><div class="heading-group"><span class="index-label">02 /</span><h2>Add your photos</h2></div><span class="mono">A FEW MOMENTS AT A TIME.</span></div>
+            <input #fileInput class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" multiple (change)="choose($event)" [disabled]="uploading() || busy()" tabindex="-1" aria-label="Select photos">
+            <div class="dropzone" [class.dragging]="dragging()" [class.disabled]="uploading() || busy()" (dragover)="$event.preventDefault(); dragging.set(true)" (dragleave)="dragging.set(false)" (drop)="drop($event)">
+              <span class="upload-icon"><app-icon name="upload"/></span><h3>{{ uploading() ? 'Making room for your memories…' : 'Drop a few good moments here.' }}</h3><p>Drag & drop your photos, or choose them from your device.</p><button class="button" (click)="fileInput.click()" [disabled]="uploading() || busy()"><app-icon name="plus"/> Choose photos</button><span class="upload-help">JPEG, PNG or WebP · Up to 10 MB each · 20 photos at a time</span>
+            </div>
+            @if (queue().length) { <div class="upload-queue" aria-live="polite">@for (item of queue(); track $index) { <div class="upload-item"><app-icon [name]="item.status === 'done' ? 'check' : 'image'"/><div class="upload-info"><strong>{{ item.file.name }}</strong>@if (item.status === 'error') { <span class="upload-error">{{ item.error }}</span> } @else if (item.status === 'uploading') { <progress [value]="item.progress" max="100" [attr.aria-label]="'Uploading ' + item.file.name"></progress> }</div><span class="mono">{{ item.status === 'uploading' ? (item.progress === 100 ? 'PROCESSING' : item.progress + '%') : item.status }}</span></div> } @if (failed() && !uploading()) { <button class="button small" (click)="retry()">Retry failed uploads</button> }</div> }
+          </div>
+        } @else { <p class="create-note"><app-icon name="image"/> Once your album is created, you can start adding photos.</p> }
+      }
+      @if (!isNew) {
+        <section class="photos-section"><div class="section-heading"><div class="heading-group"><span class="index-label">{{ editing ? '03' : '01' }} /</span><h2>The moments</h2><span class="count-badge">{{ photos().length }}</span></div><span class="mono">{{ editing ? 'FIRST PHOTO = ALBUM COVER' : 'CLICK A PHOTO TO TAKE A CLOSER LOOK' }}</span></div>
+          @if (photos().length === 0) { <div class="empty-photos"><app-icon name="image"/><h3>The best part is still to come.</h3><p>Add some photos to bring this album to life.</p>@if (!editing) { <a class="button" [routerLink]="['/albums', album()!.id, 'edit']"><app-icon name="plus"/> Add photos</a> }</div> }
+          @else { <div class="photo-grid">@for (photo of photos(); track photo.id; let i = $index) { <div class="photo-card"><button class="photo-open" (click)="openPhoto(i)" [attr.aria-label]="'View ' + photo.name"><img [src]="asset(photo.thumbnailUrl)" [alt]="photo.name" loading="lazy"></button><div class="photo-label"><span [title]="photo.name">{{ photo.name }}</span>@if (editing) { <button class="icon-button danger-icon" (click)="askDelete(photo)" [disabled]="busy() || uploading()" [attr.aria-label]="'Delete ' + photo.name"><app-icon name="trash"/></button> } @else { <span class="photo-number">{{ (i + 1).toString().padStart(2, '0') }}</span> }</div>@if (i === 0) { <span class="cover-label">COVER</span> }</div> }</div> }
+        </section>
+        @if (editing) { <div class="danger-zone"><div><h3>Delete this album</h3><p>This permanently removes the album and all its photos.</p></div><button class="button danger" (click)="askDelete('album')" [disabled]="busy() || uploading()"><app-icon name="trash"/> Delete album</button></div> }
+      }
+    }
+  }
+</div>
+<dialog #viewer class="lightbox" (cancel)="$event.preventDefault(); closePhoto()" aria-label="Photo viewer">
+  @if (activePhoto(); as photo) { <div class="lightbox-top"><span>{{ lightboxIndex() + 1 }} / {{ photos().length }}</span><button class="icon-button" (click)="closePhoto()" aria-label="Close photo viewer"><app-icon name="close"/></button></div><div class="lightbox-stage"><button class="icon-button" (click)="step(-1)" aria-label="Previous photo" [disabled]="photos().length < 2"><app-icon name="back"/></button><img [src]="asset(photo.originalUrl)" [alt]="photo.name"><button class="icon-button" (click)="step(1)" aria-label="Next photo" [disabled]="photos().length < 2"><app-icon name="arrow"/></button></div><div class="lightbox-bottom"><span>{{ photo.name }}</span><span>{{ photo.width }} × {{ photo.height }}</span></div> }
+</dialog>
+<dialog #confirmation class="confirm-dialog" (cancel)="$event.preventDefault(); cancelDelete()" aria-labelledby="confirm-title"><span class="eyebrow">ONE LAST CHECK</span><h2 id="confirm-title">{{ deleteTarget() === 'album' ? 'Delete this album?' : 'Delete this photo?' }}</h2><p>{{ deleteTarget() === 'album' ? 'The album and every photo in it will be permanently deleted.' : 'This photo will be permanently removed from the album.' }} This cannot be undone.</p><div class="form-actions"><button class="button" (click)="cancelDelete()" [disabled]="busy()" autofocus>Keep it</button><button class="button danger" (click)="confirmDelete()" [disabled]="busy()">{{ busy() ? 'Deleting…' : 'Yes, delete' }}</button></div></dialog>
